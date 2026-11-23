@@ -1,14 +1,16 @@
 # Planillas de calificaciones
 
-Página web que toma los Excel de **Calificaciones** que exporta Colegium y arma la planilla de la
-Escuela del Magisterio en PDF, lista para imprimir y firmar.
+Página web que toma los Excel de **Calificaciones** que exporta Colegium y arma la planilla de
+seguimiento en PDF, lista para imprimir y firmar.
 
 Todo pasa en el navegador: los Excel no se suben a ningún servidor.
 
 ## Cómo se usa
 
-1. Escribir el nombre del docente y el ciclo lectivo (van en el encabezado).
+1. Escribir el colegio, el docente y el ciclo lectivo (van en el encabezado). El colegio y el docente
+   quedan guardados en el navegador.
 2. Arrastrar los Excel de cada curso: Cierre de Período 1, Cierre de Período 2 y Planilla final.
+   El botón **Ayuda** explica cómo bajarlos de Colegium.
    Se pueden cargar varios cursos juntos: se agrupan por Curso + Asignatura.
 3. Descargar el PDF de cada curso, o todos juntos en un .zip.
 
@@ -45,7 +47,7 @@ npx tsx scripts/probar.ts salida/ ruta/a/los/*.xlsx
 
 | Archivo | Qué hace |
 | --- | --- |
-| `src/config.ts` | Textos fijos: colegio, títulos, estado que se incluye, tamaño de hoja |
+| `src/config.ts` | Textos fijos: títulos, estado que se incluye, tamaño de hoja |
 | `src/lib/excel.ts` | Lee los .xlsx (read-excel-file) |
 | `src/lib/procesar.ts` | Reconoce cada archivo, agrupa por curso y arma las columnas del formato |
 | `src/lib/pdf.ts` | Diseña cada hoja del PDF (pdfmake) y calcula la escala para que entre |

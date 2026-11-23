@@ -1,5 +1,6 @@
 // Prueba sin navegador: genera los PDF de los Excel que le pases.
 // Uso: npx tsx scripts/probar.ts carpeta-salida archivo1.xlsx archivo2.xlsx ...
+// El colegio y el docente se pasan con las variables COLEGIO y DOCENTE.
 import { mkdirSync, readFileSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
 import pdfmake from 'pdfmake'
@@ -37,7 +38,12 @@ const { planillas, noReconocidos } = procesarHojas(hojas)
 for (const n of noReconocidos) console.log(`No reconocido: ${n.archivo} (${n.motivo})`)
 
 mkdirSync(salida, { recursive: true })
-const opciones = { docente: process.env.DOCENTE ?? '', anio: new Date().getFullYear(), fecha: new Date() }
+const opciones = {
+  colegio: process.env.COLEGIO ?? '',
+  docente: process.env.DOCENTE ?? '',
+  anio: new Date().getFullYear(),
+  fecha: new Date(),
+}
 for (const p of planillas) {
   const destino = join(salida, `${nombreDeArchivo(`Planilla - ${p.asignatura} - ${p.curso}`)}.pdf`)
   await pdfmake.createPdf(crearDocumento(p, opciones)).write(destino)

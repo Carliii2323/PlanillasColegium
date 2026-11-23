@@ -1,6 +1,5 @@
 // Datos fijos de la planilla. Cambiá acá los textos sin tocar el resto del código.
 export const CONFIG = {
-  colegio: '',
   tituloPlanilla: 'Planilla de Seguimiento',
 
   /** Solo entran estudiantes con este estado; el resto se excluye. */

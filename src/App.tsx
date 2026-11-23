@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react'
 import { CONFIG } from './config'
 import { leerArchivoExcel, type HojaLeida } from './lib/excel'
 import { descargar, generarPdf, generarZip, nombrePdf, prepararDescargas } from './lib/pdf-navegador'
 import { procesarHojas, type ArchivoNoReconocido, type PlanillaCurso } from './lib/procesar'
 
+const CLAVE_COLEGIO = 'planillas.colegio'
 const CLAVE_DOCENTE = 'planillas.docente'
 
 function leerGuardado(clave: string): string {
@@ -23,7 +24,9 @@ function guardar(clave: string, valor: string) {
 }
 
 export default function App() {
+  const [colegio, setColegio] = useState(() => leerGuardado(CLAVE_COLEGIO))
   const [docente, setDocente] = useState(() => leerGuardado(CLAVE_DOCENTE))
+  const [ayudaAbierta, setAyudaAbierta] = useState(false)
   const [anio, setAnio] = useState(() => String(new Date().getFullYear()))
   const [hojas, setHojas] = useState<HojaLeida[]>([])
   const [erroresLectura, setErroresLectura] = useState<ArchivoNoReconocido[]>([])
@@ -64,7 +67,7 @@ export default function App() {
     setLeyendo(false)
   }
 
-  const opciones = () => ({ docente: docente.trim(), anio: anio.trim(), fecha: new Date() })
+  const opciones = () => ({ colegio: colegio.trim(), docente: docente.trim(), anio: anio.trim(), fecha: new Date() })
 
   async function descargarCurso(p: PlanillaCurso) {
     setGenerando(p.id)
@@ -99,15 +102,34 @@ export default function App() {
   return (
     <main className="mx-auto max-w-5xl px-5 pt-12 pb-16 sm:px-8">
       <header>
-        <h1 className="text-4xl leading-tight font-bold sm:text-5xl">Generador de Planillas de calificaciones</h1>
-        <p className="mt-3 max-w-[62ch] text-lg">
-          Generamos tu Planilla de Calificaciones {CONFIG.colegio}, lista para imprimir y firmar.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <h1 className="text-4xl leading-tight font-bold sm:text-5xl">Generador de Planillas de calificaciones</h1>
+          <button
+            type="button"
+            onClick={() => setAyudaAbierta(true)}
+            className="mt-1 inline-flex items-center gap-2 rounded-[3px] border-2 border-tinta bg-hoja px-4 py-2 text-lg font-bold text-tinta hover:bg-tinta hover:text-white"
+          >
+            <IconoPregunta /> Ayuda
+          </button>
+        </div>
+        <p className="mt-3 max-w-[62ch] text-lg">Generamos tu Planilla de Calificaciones, lista para imprimir y firmar.</p>
         <p className="mt-1 text-lapiz"></p>
       </header>
 
       <section aria-label="Datos del encabezado" className="mt-10">
         <div className="flex flex-wrap gap-x-10 gap-y-4">
+          <CampoLinea etiqueta="Colegio:">
+            <input
+              value={colegio}
+              onChange={(e) => {
+                setColegio(e.target.value)
+                guardar(CLAVE_COLEGIO, e.target.value)
+              }}
+              placeholder="Nombre del colegio"
+              autoComplete="organization"
+              className="w-80 max-w-full"
+            />
+          </CampoLinea>
           <CampoLinea etiqueta="Docente:">
             <input
               value={docente}
@@ -138,9 +160,18 @@ export default function App() {
         <ZonaArchivos leyendo={leyendo} alSoltar={agregarArchivos} />
         <p className="mt-3 max-w-[70ch] text-sm text-lapiz">
           Por cada curso, cargá los tres Excel que exporta Colegium: Cierre de Período 1, Cierre de Período 2 y
-          Planilla final. Podés cargar varios cursos juntos; se agrupan solos.
+          Planilla final. Podés cargar varios cursos juntos; se agrupan solos.{' '}
+          <button
+            type="button"
+            onClick={() => setAyudaAbierta(true)}
+            className="font-bold text-tinta underline underline-offset-4 hover:text-tinta-oscura"
+          >
+            Cómo bajarlos de Colegium
+          </button>
         </p>
       </section>
+
+      <GuiaAyuda abierta={ayudaAbierta} alCerrar={() => setAyudaAbierta(false)} />
 
       {error && (
         <p role="alert" className="mt-8 border-l-4 border-corrector bg-hoja px-4 py-3 text-corrector">
@@ -395,6 +426,103 @@ function Cruz() {
   return (
     <svg aria-hidden viewBox="0 0 16 16" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.2">
       <path d="M4 4l8 8M12 4l-8 8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+const PASOS_COLEGIUM: ReactNode[] = [
+  <>
+    Entrá a <b>Colegium</b> con tu usuario.
+  </>,
+  <>
+    En el menú de la izquierda, andá a <b>Calificaciones</b>.
+  </>,
+  <>Elegí una asignatura o un curso.</>,
+  <>
+    Elegí <b>Periodo 1</b>, <b>Periodo 2</b> o <b>Final</b> y tocá, arriba a la derecha, el botón de la hoja con
+    una flechita <IconoExportar />. Se descarga un Excel.
+  </>,
+  <>Repetí el paso anterior con los otros dos: para la planilla completa hacen falta los tres Excel.</>,
+  <>Arrastrá los Excel a esta página y descargá el PDF.</>,
+]
+
+/** Ventana con los pasos para bajar los Excel de Colegium. */
+function GuiaAyuda({ abierta, alCerrar }: { abierta: boolean; alCerrar: () => void }) {
+  const dialogo = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    const d = dialogo.current
+    if (!d) return
+    if (abierta && !d.open) d.showModal()
+    if (!abierta && d.open) d.close()
+  }, [abierta])
+
+  return (
+    <dialog
+      ref={dialogo}
+      aria-labelledby="titulo-ayuda"
+      onClose={alCerrar}
+      // Un clic fuera de la ventana (en el fondo oscuro) también la cierra.
+      onClick={(e) => e.target === e.currentTarget && alCerrar()}
+      className="m-auto w-[min(42rem,calc(100%-2rem))] border border-grafito bg-hoja p-0 text-grafito shadow-[6px_6px_0_var(--color-renglon)] backdrop:bg-grafito/50"
+    >
+      <div className="p-5 sm:p-8">
+        <div className="flex items-start justify-between gap-4">
+          <h2 id="titulo-ayuda" className="text-2xl leading-tight font-bold">
+            Cómo bajar las calificaciones de Colegium
+          </h2>
+          <button
+            type="button"
+            onClick={alCerrar}
+            aria-label="Cerrar"
+            className="-mt-1 -mr-2 p-2 text-lapiz hover:text-grafito"
+          >
+            <Cruz />
+          </button>
+        </div>
+        <ol className="mt-5 border border-renglon text-lg">
+          {PASOS_COLEGIUM.map((paso, i) => (
+            <li
+              key={i}
+              className={`grid grid-cols-[2.75rem_1fr] border-b border-renglon last:border-b-0 ${
+                i % 2 === 0 ? 'bg-fila/60' : ''
+              }`}
+            >
+              <span className="border-r border-renglon py-2.5 text-center font-bold tabular-nums">{i + 1}</span>
+              <span className="px-3 py-2.5 leading-snug">{paso}</span>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-6 flex justify-end">
+          <BotonTinta onClick={alCerrar}>Cerrar</BotonTinta>
+        </div>
+      </div>
+    </dialog>
+  )
+}
+
+/** El botón de exportar de Colegium: una hoja con una flechita. */
+function IconoExportar() {
+  return (
+    <span
+      role="img"
+      aria-label="(ícono de hoja con flechita)"
+      className="mx-0.5 inline-flex size-7 items-center justify-center rounded-md border-2 border-tinta align-middle text-tinta"
+    >
+      <svg aria-hidden viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M11.5 3H5.5A1.5 1.5 0 0 0 4 4.5v11A1.5 1.5 0 0 0 5.5 17h6" strokeLinejoin="round" />
+        <path d="M8.5 10H17M14 7l3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  )
+}
+
+function IconoPregunta() {
+  return (
+    <svg aria-hidden viewBox="0 0 20 20" className="size-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <circle cx="10" cy="10" r="8" />
+      <path d="M7.6 7.6a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.4" strokeLinecap="round" />
+      <circle cx="10" cy="14.6" r="0.6" fill="currentColor" />
     </svg>
   )
 }

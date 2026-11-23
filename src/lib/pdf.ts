@@ -6,6 +6,7 @@ import { altoLinea, anchoTexto, formatearFechaHora, formatearNota, lineasTexto }
 export const FUENTE_PDF = 'PlanillaSans'
 
 export interface OpcionesPdf {
+  colegio: string
   docente: string
   anio: number | string
   fecha: Date
@@ -35,7 +36,7 @@ const tamanoEncabezado = (c: Columna, escala: number) =>
 
 function textosTitulo(p: PlanillaCurso, hoja: HojaPlanilla, o: OpcionesPdf): string[] {
   return [
-    `Nombre del Colegio: ${CONFIG.colegio}`,
+    `Nombre del Colegio: ${o.colegio}`.trim(),
     `${CONFIG.tituloPlanilla} ${p.asignatura} (${o.anio})`,
     `Docente: ${o.docente}`.trim(),
     hoja.titulo,
@@ -169,7 +170,7 @@ export function crearDocumento(p: PlanillaCurso, o: OpcionesPdf): TDocumentDefin
     defaultStyle: { font: FUENTE_PDF },
     info: {
       title: `${CONFIG.tituloPlanilla} ${p.asignatura} - ${p.curso}`,
-      author: o.docente || CONFIG.colegio,
+      author: o.docente || o.colegio || undefined,
       creator: 'Planillas de calificaciones',
     },
     content: p.hojas.flatMap((hoja, i) =>
