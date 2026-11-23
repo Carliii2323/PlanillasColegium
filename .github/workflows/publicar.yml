@@ -1,6 +1,7 @@
 # Publica la página en GitHub Pages cada vez que se sube un cambio a main.
-# Basado en el flujo de la documentación de Vite ("Deploying a Static Site").
-# Antes: Settings > Pages > Build and deployment > Source: "GitHub Actions".
+# Sigue la misma estructura que el flujo oficial de GitHub (compilar y publicar en dos trabajos),
+# que es la que funcionó en este repositorio.
+# Requisito: Settings > Pages > Build and deployment > Source: "GitHub Actions".
 name: Publicar en GitHub Pages
 
 on:
@@ -13,15 +14,13 @@ permissions:
   pages: write
   id-token: write
 
+# Una publicación a la vez; si llega otra, espera a que termine la anterior.
 concurrency:
   group: 'pages'
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  publicar:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  compilar:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,10 +36,19 @@ jobs:
         run: npm run build
       - name: Configurar Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
+      # v4 usa la misma versión de la librería de artefactos que deploy-pages v5.
       - name: Subir la página
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
         with:
           path: './dist'
+
+  publicar:
+    needs: compilar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Publicar
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
