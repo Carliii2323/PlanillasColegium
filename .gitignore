@@ -1,0 +1,6 @@
+node_modules
+dist
+# Nunca subir planillas con datos de alumnos
+*.xlsx
+*.xls
+*.pdf

@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/* La interfaz usa la misma letra y el mismo gris de filas que la planilla impresa. */
+@theme {
+  --font-sans: "Planilla Sans", Calibri, Carlito, "Segoe UI", system-ui, sans-serif;
+  --color-escritorio: #eceef1;
+  --color-hoja: #ffffff;
+  --color-fila: #e0e0e0;
+  --color-fila-suave: #f2f2f2;
+  --color-renglon: #c9cdd3;
+  --color-grafito: #30343b;
+  --color-lapiz: #646a73;
+  --color-tinta: #1b4b9b;
+  --color-tinta-oscura: #143a79;
+  --color-corrector: #b3261e;
+}
+
+@layer base {
+  html {
+    background: var(--color-escritorio);
+    color: var(--color-grafito);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-tinta);
+    outline-offset: 2px;
+  }
+}
+
+/* Hoja en blanco con renglones alternados, como las filas de la planilla. */
+.hoja-renglones {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-fila) 70%, transparent) 0 26px,
+    transparent 26px 52px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
