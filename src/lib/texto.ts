@@ -25,14 +25,28 @@ export function separarNombre(estudiante: string): { apellido: string; nombre: s
   }
 }
 
-/** Colegium repite el curso dos veces en la misma celda; se deja una sola. */
+/** Año + división de un curso, con o sin espacio y "°": "1 H1", "1° H1", "3CN". */
+const CODIGO_CURSO = /(\d+)\s*[°º]?\s*([A-Za-z]+\d*)/g
+
+/**
+ * Deja el curso listo para mostrar. Colegium repite el curso en la misma celda, a veces
+ * escrito distinto ("1 H1 1° H1" -> "1H1"). Si la celda trae varios cursos ("3H2 3CN",
+ * "3H2/3CN"), quedan separados por coma y sin repetir: "3H2, 3CN".
+ */
 export function limpiarCurso(curso: string): string {
-  const partes = limpiarEspacios(curso).split(' ')
-  const mitad = partes.length / 2
-  if (Number.isInteger(mitad) && partes.slice(0, mitad).join(' ') === partes.slice(mitad).join(' ')) {
-    return partes.slice(0, mitad).join(' ')
+  const texto = limpiarEspacios(curso)
+  const codigos = [...texto.matchAll(CODIGO_CURSO)].map((m) => `${m[1]}${m[2].toUpperCase()}`)
+  // Solo si la celda es nada más que códigos de curso y separadores.
+  const sobra = texto.replace(CODIGO_CURSO, '').replace(/[\s,;/]+/g, '')
+  if (codigos.length > 0 && sobra === '') return [...new Set(codigos)].join(', ')
+
+  // Nombre de curso con espacios ("3° Año A 3° Año A"): solo se quita la repetición.
+  const palabras = texto.split(' ')
+  const mitad = palabras.length / 2
+  if (Number.isInteger(mitad) && palabras.slice(0, mitad).join(' ') === palabras.slice(mitad).join(' ')) {
+    return palabras.slice(0, mitad).join(' ')
   }
-  return partes.join(' ')
+  return texto
 }
 
 const formatoNota = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2, useGrouping: false })

@@ -39,6 +39,7 @@ function textosTitulo(p: PlanillaCurso, hoja: HojaPlanilla, o: OpcionesPdf): str
     `Nombre del Colegio: ${o.colegio}`.trim(),
     `${CONFIG.tituloPlanilla} ${p.asignatura} (${o.anio})`,
     `Docente: ${o.docente}`.trim(),
+    `Curso: ${p.curso}`.trim(),
     hoja.titulo,
   ]
 }
